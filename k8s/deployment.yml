@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: bank-app
-          image: semever/bank-app:3
+          image: semever/goldencat-bank:1.0
           imagePullPolicy: Always
           ports:
             - containerPort: 8080
