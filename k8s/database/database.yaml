@@ -1,13 +1,25 @@
 ---
-apiVersion: apps/v1
-kind: Deployment
+apiVersion: v1
+kind: Service
 metadata:
   name: mysql
   namespace: monitoring
 spec:
+  clusterIP: None   # Headless service (REQUIRED for StatefulSet)
+  ports:
+    - port: 3306
+      targetPort: 3306
+  selector:
+    app: mysql
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mysql
+  namespace: monitoring
+spec:
+  serviceName: mysql
   replicas: 1
-  strategy:
-    type: Recreate
   selector:
     matchLabels:
       app: mysql
@@ -18,7 +30,7 @@ spec:
     spec:
       containers:
         - name: mysql
-          image: mysql:latest
+          image: mysql:8.0
           ports:
             - containerPort: 3306
           env:
@@ -37,21 +49,19 @@ spec:
               port: 3306
             initialDelaySeconds: 20
             periodSeconds: 10
-      volumes:
-        - name: mysql-data
-          persistentVolumeClaim:
-            claimName: mysql-pvc
----
-# MySQL Service
-apiVersion: v1
-kind: Service
-metadata:
-  name: mysql-service
-  namespace: monitoring
-spec:
-  type: ClusterIP
-  ports:
-    - port: 3306
-      targetPort: 3306
-  selector:
-    app: mysql
+          livenessProbe:
+            tcpSocket:
+              port: 3306
+            initialDelaySeconds: 30
+            periodSeconds: 10
+
+  volumeClaimTemplates:
+    - metadata:
+        name: mysql-data
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        storageClassName: gp2
+        resources:
+          requests:
+            storage: 10Gi

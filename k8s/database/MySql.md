@@ -1,0 +1,1 @@
+kubectl create secret generic mysql-secret  -n monitoring --from-literal=MYSQL_ROOT_PASSWORD=Test@123
